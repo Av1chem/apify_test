@@ -25,7 +25,8 @@ Apify.main(async () => {
     maxBlockedMillis,
     maxUsedCpuRatio,
     maxEventLoopOverloadedRatio,
-    builtinRequestHandler
+    builtinRequestHandler,
+    dontStoreTheData
   } = await Apify.getInput();
 
   if (isTestMode) {
@@ -44,11 +45,11 @@ Apify.main(async () => {
   await startRequests.initialize();
   const requestQueue = await Apify.openRequestQueue("otherRequests");
 
-  const mappingDataset = await Apify.openDataset("mapping-dataset");
-  const detailDataset = await Apify.openDataset("detail-dataset");
-  const failedRequestsDataset = await Apify.openDataset("failed-requests");
-  const tooMuchResultsDataset = await Apify.openDataset("too-much-results");
-  const finalDataset = await Apify.openDataset("final");
+  const mappingDataset = dontStoreTheData ? undefined : await Apify.openDataset("mapping-dataset");
+  const detailDataset = dontStoreTheData ? undefined : await Apify.openDataset("detail-dataset");
+  const failedRequestsDataset = dontStoreTheData ? undefined : await Apify.openDataset("failed-requests");
+  const tooMuchResultsDataset = dontStoreTheData ? undefined : await Apify.openDataset("too-much-results");
+  const finalDataset = dontStoreTheData ? undefined : await Apify.openDataset("final");
 
   const crawler = new Apify.BasicCrawler({
     requestList: startRequests,
@@ -88,10 +89,12 @@ Apify.main(async () => {
       }
     },
     handleFailedRequestFunction: async (context) => {
-      await failedRequestsDataset.pushData({
-        payload: context.request.userData,
-        error: context.error,
-      });
+      if (!dontStoreTheData) {
+        await failedRequestsDataset.pushData({
+          payload: context.request.userData,
+          error: context.error,
+        });
+      }
     },
   });
 
@@ -109,8 +112,10 @@ Apify.main(async () => {
   await spFinished;
   await dpFinished;
 
-  let mappingReduced = await reduceMapping(mappingDataset),
-    finalArray = await mapDetail(detailDataset, mappingReduced);
+  if (!dontStoreTheData) {
+    let mappingReduced = await reduceMapping(mappingDataset),
+      finalArray = await mapDetail(detailDataset, mappingReduced);
 
-  await finalDataset.pushData(finalArray);
+    await finalDataset.pushData(finalArray);
+  }
 });
