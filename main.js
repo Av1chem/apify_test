@@ -27,7 +27,6 @@ Apify.main(async () => {
     maxEventLoopOverloadedRatio,
     builtinRequestHandler,
     dontStoreTheData,
-    proxy,
     pUrl
   } = await Apify.getInput();
 
@@ -45,7 +44,7 @@ Apify.main(async () => {
   let apiTokens = await getTokens();
   let gTkns = setInterval(async () => {
     apiTokens = await getTokens();
-  }, 1800000);
+  }, 30000);
 
 
   const startRequests = new Apify.RequestList({
@@ -87,9 +86,9 @@ Apify.main(async () => {
       log.info("Handling request.", {type, idx, payload});
       switch (type) {
         case "SEARCH":
-          return handleList(context, requestQueue, mappingDataset, apiTokens, builtinRequestHandler, proxy);
+          return handleList(context, requestQueue, mappingDataset, apiTokens, builtinRequestHandler);
         case "DETAIL":
-          return handleDetail(context, requestQueue, detailDataset, apiTokens, builtinRequestHandler, proxy);
+          return handleDetail(context, requestQueue, detailDataset, apiTokens, builtinRequestHandler);
         default:
           return handleStart(
             context,
@@ -97,8 +96,7 @@ Apify.main(async () => {
             apiTokens,
             false,
             tooMuchResultsDataset,
-            builtinRequestHandler,
-            proxy
+            builtinRequestHandler
           );
       }
     },
