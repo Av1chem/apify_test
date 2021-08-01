@@ -16,7 +16,7 @@ exports.getTokens = async () => {
   return tokens;
 };
 
-exports.cryptoRequest = async (request, tokens, proxy) => {
+exports.cryptoRequest = async (request, tokens) => {
   // newest version
   let encryptedResponse = {},
     plainPayload = Object.assign({}, request.userData.payload, {
@@ -27,12 +27,6 @@ exports.cryptoRequest = async (request, tokens, proxy) => {
     encryptedResponse = await unirest(request.method, request.url)
       .timeout(180000)
       .headers(request.headers)
-      .proxy(proxy.url)
-      .auth({
-        user: proxy.user,
-        password: proxy.pass,
-        // sendImmediately: true
-      })
       .send(encryptedPayload)
       .then((res) => {
         return res.body;
