@@ -58,6 +58,9 @@ exports.handleDetail = async (
 ) => {
   // Handle details
   let resp = await (builtinRequestHandler ? cryptoRequestOld: cryptoRequest)(context.request, apiTokens);
+  if (detailDataset === undefined) {
+    return
+  }
   if (context.request.userData.p_type === "P") {
     await detailDataset.pushData(
       Object.assign({}, resp, {
