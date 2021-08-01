@@ -1,8 +1,8 @@
 const Apify = require("apify");
 const {
-  utils: { log, requestAsBrowser },
+  utils: {log, requestAsBrowser},
 } = Apify;
-const { v4: uuidv4 } = require("uuid");
+const {v4: uuidv4} = require("uuid");
 
 exports.generateStartRequests = (zipCodes, networks, apiDistance) => {
   let pairs = shuffleArray(cartesian(zipCodes, networks)),
@@ -53,12 +53,14 @@ exports.generateSearchRequests = async (
       idx: fromRequest.userData.idx,
       totalCount: response.totalCount,
     });
-    promises.push(
-      tooMuchResultsDataset.pushData({
-        payload: fromRequest.userData,
-        totalCount: response.totalCount,
-      })
-    );
+    if (tooMuchResultsDataset !== undefined) {
+      promises.push(
+        tooMuchResultsDataset.pushData({
+          payload: fromRequest.userData,
+          totalCount: response.totalCount,
+        })
+      );
+    }
 
     totalCount = 1999;
   } else if (response.totalCount === 2000) {
@@ -93,7 +95,7 @@ exports.generateSearchRequests = async (
               searchForTH: fromRequest.userData.payload.searchForTH,
               useridin: fromRequest.userData.payload.useridin,
               fadVendorMemberNumber:
-                fromRequest.userData.payload.fadVendorMemberNumber,
+              fromRequest.userData.payload.fadVendorMemberNumber,
             },
             network: fromRequest.userData.network,
             idx: fromRequest.userData.idx + `-${i}`,
