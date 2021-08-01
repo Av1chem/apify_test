@@ -17,11 +17,10 @@ exports.handleStart = async (
   apiTokens,
   isTestMode,
   tooMuchResultsDataset,
-  builtinRequestHandler,
-  proxy
+  builtinRequestHandler
 ) => {
   // Handle search
-  let resp = await (builtinRequestHandler ? cryptoRequestOld: cryptoRequest)(context.request, apiTokens, proxy);
+  let resp = await (builtinRequestHandler ? cryptoRequestOld: cryptoRequest)(context.request, apiTokens);
 
   globals.sGenQueue.push({
     fromRequest: context.request,
@@ -37,11 +36,10 @@ exports.handleList = async (
   requestQueue,
   mappingDataset,
   apiTokens,
-  builtinRequestHandler,
-  proxy
+  builtinRequestHandler
 ) => {
   // Handle pagination
-  let resp = await (builtinRequestHandler ? cryptoRequestOld: cryptoRequest)(context.request, apiTokens, proxy);
+  let resp = await (builtinRequestHandler ? cryptoRequestOld: cryptoRequest)(context.request, apiTokens);
 
   globals.dGenQueue.push({
     fromRequest: context.request,
@@ -56,11 +54,10 @@ exports.handleDetail = async (
   requestQueue,
   detailDataset,
   apiTokens,
-  builtinRequestHandler,
-  proxy
+  builtinRequestHandler
 ) => {
   // Handle details
-  let resp = await (builtinRequestHandler ? cryptoRequestOld: cryptoRequest)(context.request, apiTokens, proxy);
+  let resp = await (builtinRequestHandler ? cryptoRequestOld: cryptoRequest)(context.request, apiTokens);
   if (detailDataset === undefined) {
     return
   }
