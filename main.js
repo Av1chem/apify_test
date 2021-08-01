@@ -26,15 +26,27 @@ Apify.main(async () => {
     maxUsedCpuRatio,
     maxEventLoopOverloadedRatio,
     builtinRequestHandler,
-    dontStoreTheData
+    dontStoreTheData,
+    proxy,
+    pUrl
   } = await Apify.getInput();
+
+  const proxyConfiguration = await Apify.createProxyConfiguration({
+    proxyUrls: [
+      pUrl,
+    ]
+  });
 
   if (isTestMode) {
     log.info("\n\nRunning in test mode.\n\n");
     zipCodes = zipCodes.slice(0, 2);
   }
 
-  const apiTokens = await getTokens();
+  let apiTokens = await getTokens();
+  let gTkns = setInterval(async () => {
+    apiTokens = await getTokens();
+  }, 1800000);
+
 
   const startRequests = new Apify.RequestList({
     sourcesFunction: () =>
@@ -51,12 +63,13 @@ Apify.main(async () => {
   const tooMuchResultsDataset = dontStoreTheData ? undefined : await Apify.openDataset("too-much-results");
   const finalDataset = dontStoreTheData ? undefined : await Apify.openDataset("final");
 
-  const crawler = new Apify.BasicCrawler({
+  const crawler = new Apify.CheerioCrawler({
     requestList: startRequests,
     requestQueue,
     maxConcurrency,
     maxRequestRetries,
     handleRequestTimeoutSecs,
+    proxyConfiguration,
     autoscaledPoolOptions: {
       snapshotterOptions: {
         maxBlockedMillis,
@@ -67,16 +80,16 @@ Apify.main(async () => {
         maxEventLoopOverloadedRatio,
       },
     },
-    handleRequestFunction: async (context) => {
+    handlePageFunction: async (context) => {
       const {
         userData: {type, idx, payload},
       } = context.request;
       log.info("Handling request.", {type, idx, payload});
       switch (type) {
         case "SEARCH":
-          return handleList(context, requestQueue, mappingDataset, apiTokens, builtinRequestHandler);
+          return handleList(context, requestQueue, mappingDataset, apiTokens, builtinRequestHandler, proxy);
         case "DETAIL":
-          return handleDetail(context, requestQueue, detailDataset, apiTokens, builtinRequestHandler);
+          return handleDetail(context, requestQueue, detailDataset, apiTokens, builtinRequestHandler, proxy);
         default:
           return handleStart(
             context,
@@ -84,7 +97,8 @@ Apify.main(async () => {
             apiTokens,
             false,
             tooMuchResultsDataset,
-            builtinRequestHandler
+            builtinRequestHandler,
+            proxy
           );
       }
     },
@@ -107,6 +121,7 @@ Apify.main(async () => {
     dpFinished = dGenPool.run();
   await crawler.run();
   clearInterval(qStats);
+  clearInterval(gTkns);
   log.info("Crawl finished.\n\n\n");
   globals.isFinished = true;
   await spFinished;
